@@ -1,0 +1,234 @@
+mixed-port: 7890
+allow-lan: true
+mode: rule
+log-level: info
+external-controller: 0.0.0.0:9090
+secret: ""
+
+dns:
+  enable: true
+  ipv6: false
+  listen: 0.0.0.0:7874
+  enhanced-mode: fake-ip
+  nameserver:
+    - https://doh.pub/dns-query
+    - https://dns.alidns.com/dns-query
+  fallback:
+    - tls://1.1.1.1:853
+    - tls://8.8.8.8:853
+  fake-ip-filter:
+    - "*.lan"
+    - localhost
+
+proxy-providers:
+  hxyun:
+    type: http
+    path: ./proxy_providers/hxyun.yaml
+    url: 机场订阅
+    interval: 86400
+    health-check:
+      enable: true
+      interval: 600
+      url: http://cp.cloudflare.com/generate_204
+
+proxy-groups:
+  - name: 代理
+    type: select
+    proxies:
+      - ♻️ 自动选择
+      - DIRECT
+      - REJECT
+    use:
+      - hxyun
+
+  - name: ♻️ 自动选择
+    type: url-test
+    use:
+      - hxyun
+    url: http://cp.cloudflare.com/generate_204
+    interval: 300
+
+  - { name: 🌍 国外网站, type: select, proxies: [代理, DIRECT] }
+  - { name: 📲 社交媒体, type: select, proxies: [代理, DIRECT] }
+  - { name: 🎮 游戏服务, type: select, proxies: [代理, DIRECT] }
+  - { name: 📺 流媒体, type: select, proxies: [代理, DIRECT] }
+  - { name: 🔍 搜索引擎, type: select, proxies: [代理, DIRECT] }
+  - { name: 🤖 OpenAI, type: select, proxies: [代理, DIRECT] }
+  - { name: ⛔ 广告拦截, type: select, proxies: [REJECT, DIRECT] }
+  - { name: 🐟 漏网之鱼, type: select, proxies: [代理, DIRECT] }
+
+  - { name: 📦 TikTok, type: select, proxies: [代理, DIRECT] }
+  - { name: 🎞️ YouTube, type: select, proxies: [代理, DIRECT] }
+  - { name: ☁️ Google, type: select, proxies: [代理, DIRECT] }
+  - { name: 🛍 PayPal, type: select, proxies: [代理, DIRECT] }
+  - { name: 🧠 ChatGPT, type: select, proxies: [代理, DIRECT] }
+  - { name: 🍎 Apple, type: select, proxies: [代理, DIRECT] }
+  - { name: ✈️ Telegram, type: select, proxies: [代理, DIRECT] }
+  - { name: 🎮 Steam, type: select, proxies: [代理, DIRECT] }
+  - { name: ✈️ Speedtest, type: select, proxies: [代理, DIRECT] }
+  - { name: Ⓜ️ Microsoft, type: select, proxies: [代理, DIRECT] }
+  - { name: 🧩 Disney+, type: select, proxies: [代理, DIRECT] }
+
+rule-providers:
+  StreamingMedia/Domain:
+    type: http
+    behavior: domain
+    path: ./ruleset/StreamingMedia_Domain.yaml
+    url: https://ruleset.skk.moe/List/StreamingMedia/Domain.yaml
+    interval: 86400
+
+  StreamingMedia/IPCIDR:
+    type: http
+    behavior: ipcidr
+    path: ./ruleset/StreamingMedia_IP.yaml
+    url: https://ruleset.skk.moe/List/StreamingMedia/IP.yaml
+    interval: 86400
+
+  StreamingMedia/ASN:
+    type: http
+    behavior: classical
+    path: ./ruleset/StreamingMedia_ASN.yaml
+    url: https://ruleset.skk.moe/List/StreamingMedia/ASN.yaml
+    interval: 86400
+
+  OpenAI/Domain:
+    type: http
+    behavior: domain
+    path: ./ruleset/OpenAI_Domain.yaml
+    url: https://ruleset.skk.moe/List/OpenAI/Domain.yaml
+    interval: 86400
+
+  OpenAI/IPCIDR:
+    type: http
+    behavior: ipcidr
+    path: ./ruleset/OpenAI_IP.yaml
+    url: https://ruleset.skk.moe/List/OpenAI/IP.yaml
+    interval: 86400
+
+  OpenAI/ASN:
+    type: http
+    behavior: classical
+    path: ./ruleset/OpenAI_ASN.yaml
+    url: https://ruleset.skk.moe/List/OpenAI/ASN.yaml
+    interval: 86400
+
+  Global/Global:
+    type: http
+    behavior: classical
+    path: ./ruleset/Global.yaml
+    url: https://ruleset.skk.moe/List/Global/Global.yaml
+    interval: 86400
+
+  Global/China:
+    type: http
+    behavior: classical
+    path: ./ruleset/China.yaml
+    url: https://ruleset.skk.moe/List/Global/China.yaml
+    interval: 86400
+
+  Block/Ads:
+    type: http
+    behavior: classical
+    path: ./ruleset/Block_Ads.yaml
+    url: https://ruleset.skk.moe/List/Block/Ads.yaml
+    interval: 86400
+
+  TikTok:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/TikTok.yaml
+    url: https://ruleset.skk.moe/List/Global/TikTok.yaml
+    interval: 86400
+
+  YouTube:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/YouTube.yaml
+    url: https://ruleset.skk.moe/List/Global/YouTube.yaml
+    interval: 86400
+
+  Google:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/Google.yaml
+    url: https://ruleset.skk.moe/List/Global/Google.yaml
+    interval: 86400
+
+  PayPal:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/PayPal.yaml
+    url: https://ruleset.skk.moe/List/Global/PayPal.yaml
+    interval: 86400
+
+  ChatGPT:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/ChatGPT.yaml
+    url: https://ruleset.skk.moe/List/Global/ChatGPT.yaml
+    interval: 86400
+
+  Apple:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/Apple.yaml
+    url: https://ruleset.skk.moe/List/Global/Apple.yaml
+    interval: 86400
+
+  Telegram:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/Telegram.yaml
+    url: https://ruleset.skk.moe/List/Global/Telegram.yaml
+    interval: 86400
+
+  Steam:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/Steam.yaml
+    url: https://ruleset.skk.moe/List/Global/Steam.yaml
+    interval: 86400
+
+  Speedtest:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/Speedtest.yaml
+    url: https://ruleset.skk.moe/List/Global/Speedtest.yaml
+    interval: 86400
+
+  Microsoft:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/Microsoft.yaml
+    url: https://ruleset.skk.moe/List/Global/Microsoft.yaml
+    interval: 86400
+
+  DisneyPlus:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/DisneyPlus.yaml
+    url: https://ruleset.skk.moe/List/Global/DisneyPlus.yaml
+    interval: 86400
+
+rules:
+  - RULE-SET,TikTok,📦 TikTok
+  - RULE-SET,YouTube,🎞️ YouTube
+  - RULE-SET,Google,☁️ Google
+  - RULE-SET,PayPal,🛍 PayPal
+  - RULE-SET,ChatGPT,🧠 ChatGPT
+  - RULE-SET,Apple,🍎 Apple
+  - RULE-SET,Telegram,✈️ Telegram
+  - RULE-SET,Steam,🎮 Steam
+  - RULE-SET,Speedtest,✈️ Speedtest
+  - RULE-SET,Microsoft,Ⓜ️ Microsoft
+  - RULE-SET,DisneyPlus,🧩 Disney+
+  - RULE-SET,StreamingMedia/Domain,📺 流媒体
+  - RULE-SET,StreamingMedia/IPCIDR,📺 流媒体
+  - RULE-SET,StreamingMedia/ASN,📺 流媒体
+  - RULE-SET,OpenAI/Domain,🤖 OpenAI
+  - RULE-SET,OpenAI/IPCIDR,🤖 OpenAI
+  - RULE-SET,OpenAI/ASN,🤖 OpenAI
+  - RULE-SET,Block/Ads,⛔ 广告拦截
+  - RULE-SET,Global/Global,🌍 国外网站
+  - RULE-SET,Global/China,DIRECT
+  - MATCH,🐟 漏网之鱼
