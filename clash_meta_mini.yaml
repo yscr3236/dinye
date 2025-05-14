@@ -1,0 +1,172 @@
+mixed-port: 7890
+allow-lan: true
+mode: rule
+log-level: info
+external-controller: 0.0.0.0:9090
+secret: ""
+dns:
+  enable: true
+  ipv6: false
+  listen: 0.0.0.0:7874
+  enhanced-mode: fake-ip
+  nameserver:
+    - https://doh.pub/dns-query
+    - https://dns.alidns.com/dns-query
+  fallback:
+    - tls://1.1.1.1:853
+    - tls://8.8.8.8:853
+  fake-ip-filter:
+    - "*.lan"
+    - localhost
+
+proxy-providers:
+  hxyun:
+    type: http
+    path: /etc/openclash/proxy_providers/hxyun.yaml
+    url: 机场订阅
+    interval: 86400
+    health-check:
+      enable: true
+      interval: 600
+      url: http://cp.cloudflare.com/generate_204
+
+proxy-groups:
+  - name: 代理
+    type: select
+    proxies:
+      - ♻️ 自动选择
+      - DIRECT
+      - REJECT
+    use:
+      - hxyun
+
+  - name: ♻️ 自动选择
+    type: url-test
+    use:
+      - hxyun
+    url: http://cp.cloudflare.com/generate_204
+    interval: 300
+
+  - name: 🌍 国外网站
+    type: select
+    proxies:
+      - 代理
+      - DIRECT
+
+  - name: 📲 社交媒体
+    type: select
+    proxies:
+      - 代理
+      - DIRECT
+
+  - name: 🎮 游戏服务
+    type: select
+    proxies:
+      - 代理
+      - DIRECT
+
+  - name: 📺 流媒体
+    type: select
+    proxies:
+      - 代理
+      - DIRECT
+
+  - name: 🔍 搜索引擎
+    type: select
+    proxies:
+      - 代理
+      - DIRECT
+
+  - name: 🤖 OpenAI
+    type: select
+    proxies:
+      - 代理
+      - DIRECT
+
+  - name: ⛔ 广告拦截
+    type: select
+    proxies:
+      - REJECT
+      - DIRECT
+
+  - name: 🐟 漏网之鱼
+    type: select
+    proxies:
+      - 代理
+      - DIRECT
+
+rule-providers:
+  StreamingMedia/Domain:
+    type: http
+    behavior: domain
+    path: /etc/openclash/ruleset/StreamingMedia_Domain.yaml
+    url: https://ruleset.skk.moe/List/StreamingMedia/Domain.yaml
+    interval: 86400
+
+  StreamingMedia/IPCIDR:
+    type: http
+    behavior: ipcidr
+    path: /etc/openclash/ruleset/StreamingMedia_IP.yaml
+    url: https://ruleset.skk.moe/List/StreamingMedia/IP.yaml
+    interval: 86400
+
+  StreamingMedia/ASN:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/StreamingMedia_ASN.yaml
+    url: https://ruleset.skk.moe/List/StreamingMedia/ASN.yaml
+    interval: 86400
+
+  OpenAI/Domain:
+    type: http
+    behavior: domain
+    path: /etc/openclash/ruleset/OpenAI_Domain.yaml
+    url: https://ruleset.skk.moe/List/OpenAI/Domain.yaml
+    interval: 86400
+
+  OpenAI/IPCIDR:
+    type: http
+    behavior: ipcidr
+    path: /etc/openclash/ruleset/OpenAI_IP.yaml
+    url: https://ruleset.skk.moe/List/OpenAI/IP.yaml
+    interval: 86400
+
+  OpenAI/ASN:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/OpenAI_ASN.yaml
+    url: https://ruleset.skk.moe/List/OpenAI/ASN.yaml
+    interval: 86400
+
+  Global/Global:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/Global.yaml
+    url: https://ruleset.skk.moe/List/Global/Global.yaml
+    interval: 86400
+
+  Global/China:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/China.yaml
+    url: https://ruleset.skk.moe/List/Global/China.yaml
+    interval: 86400
+
+  Block/Ads:
+    type: http
+    behavior: classical
+    path: /etc/openclash/ruleset/Block_Ads.yaml
+    url: https://ruleset.skk.moe/List/Block/Ads.yaml
+    interval: 86400
+
+rules:
+  - RULE-SET,StreamingMedia/Domain,📺 流媒体
+  - RULE-SET,StreamingMedia/IPCIDR,📺 流媒体
+  - RULE-SET,StreamingMedia/ASN,📺 流媒体
+  - RULE-SET,OpenAI/Domain,🤖 OpenAI
+  - RULE-SET,OpenAI/IPCIDR,🤖 OpenAI
+  - RULE-SET,OpenAI/ASN,🤖 OpenAI
+  - RULE-SET,Block/Ads,⛔ 广告拦截
+  - RULE-SET,Global/Global,🌍 国外网站
+  - RULE-SET,Global/China,DIRECT
+  - MATCH,🐟 漏网之鱼
