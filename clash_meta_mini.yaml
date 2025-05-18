@@ -15,6 +15,10 @@ dns:
   fallback:
     - tls://1.1.1.1:853
     - tls://8.8.8.8:853
+  fallback-filter:
+    geoip: true
+    ipcidr:
+      - 240.0.0.0/4
   fake-ip-filter:
     - "*.lan"
     - localhost
@@ -31,6 +35,18 @@ proxy-providers:
       url: http://cp.cloudflare.com/generate_204
 
 proxy-groups:
+  - name: 🌏 国内网站
+    type: select
+    proxies:
+      - DIRECT
+      - 代理
+
+  - name: 🌐 国际网站
+    type: select
+    proxies:
+      - 代理
+      - DIRECT
+
   - name: 代理
     type: select
     proxies:
@@ -49,53 +65,113 @@ proxy-groups:
 
   - name: 🌍 国外网站
     type: select
-    proxies:
-      - 代理
-      - DIRECT
+    proxies: [代理, DIRECT]
 
   - name: 📲 社交媒体
     type: select
-    proxies:
-      - 代理
-      - DIRECT
+    proxies: [代理, DIRECT]
 
   - name: 🎮 游戏服务
     type: select
-    proxies:
-      - 代理
-      - DIRECT
+    proxies: [代理, DIRECT]
 
   - name: 📺 流媒体
     type: select
-    proxies:
-      - 代理
-      - DIRECT
+    proxies: [代理, DIRECT]
 
   - name: 🔍 搜索引擎
     type: select
-    proxies:
-      - 代理
-      - DIRECT
+    proxies: [代理, DIRECT]
 
   - name: 🤖 OpenAI
     type: select
-    proxies:
-      - 代理
-      - DIRECT
+    proxies: [代理, DIRECT]
 
   - name: ⛔ 广告拦截
     type: select
-    proxies:
-      - REJECT
-      - DIRECT
+    proxies: [REJECT, DIRECT]
 
   - name: 🐟 漏网之鱼
     type: select
-    proxies:
-      - 代理
-      - DIRECT
+    proxies: [代理, DIRECT]
+
+  - name: 📹 YouTube
+    type: select
+    proxies: [代理, DIRECT]
+
+  - name: 🧠 Google
+    type: select
+    proxies: [代理, DIRECT]
+
+  - name: ✈️ Telegram
+    type: select
+    proxies: [代理, DIRECT]
+
+  - name: 🐭 Disney+
+    type: select
+    proxies: [代理, DIRECT]
+
+  - name: 🎬 Netflix
+    type: select
+    proxies: [代理, DIRECT]
+
+  - name: 🧬 GitHub
+    type: select
+    proxies: [代理, DIRECT]
+
+  - name: 💰 PayPal
+    type: select
+    proxies: [代理, DIRECT]
+
+  - name: 🎵 TikTok
+    type: select
+    proxies: [代理, DIRECT]
+
+  - name: 🇭🇰 香港节点
+    type: select
+    use: [hxyun]
+    filter: '🇭🇰|HK|Hong Kong'
+
+  - name: 🇹🇼 台湾节点
+    type: select
+    use: [hxyun]
+    filter: '🇹🇼|TW|Taiwan'
+
+  - name: 🇯🇵 日本节点
+    type: select
+    use: [hxyun]
+    filter: '🇯🇵|JP|Japan'
+
+  - name: 🇸🇬 新加坡节点
+    type: select
+    use: [hxyun]
+    filter: '🇸🇬|SG|Singapore'
+
+  - name: 🇺🇸 美国节点
+    type: select
+    use: [hxyun]
+    filter: '🇺🇸|US|United States'
+
+  - name: 🌐 其他节点
+    type: select
+    use: [hxyun]
+    filter: '^(?!.*(香港|HK|Taiwan|TW|JP|Japan|SG|Singapore|US|United)).*$'
 
 rule-providers:
+  Domestic/Domain:
+    type: http
+    behavior: domain
+    path: /etc/openclash/ruleset/Domestic_Domain.yaml
+    url: https://ruleset.skk.moe/List/Domestic/Domain.yaml
+    interval: 86400
+
+  Domestic/IPCIDR:
+    type: http
+    behavior: ipcidr
+    path: /etc/openclash/ruleset/Domestic_IP.yaml
+    url: https://ruleset.skk.moe/List/Domestic/IP.yaml
+    interval: 86400
+
   StreamingMedia/Domain:
     type: http
     behavior: domain
@@ -159,7 +235,67 @@ rule-providers:
     url: https://ruleset.skk.moe/List/Block/Ads.yaml
     interval: 86400
 
+  YouTube/Domain:
+    type: http
+    behavior: domain
+    path: /etc/openclash/ruleset/YouTube_Domain.yaml
+    url: https://ruleset.skk.moe/List/YouTube/Domain.yaml
+    interval: 86400
+
+  Google/Domain:
+    type: http
+    behavior: domain
+    path: /etc/openclash/ruleset/Google_Domain.yaml
+    url: https://ruleset.skk.moe/List/Google/Domain.yaml
+    interval: 86400
+
+  Telegram/Domain:
+    type: http
+    behavior: domain
+    path: /etc/openclash/ruleset/Telegram_Domain.yaml
+    url: https://ruleset.skk.moe/List/Telegram/Domain.yaml
+    interval: 86400
+
+  DisneyPlus/Domain:
+    type: http
+    behavior: domain
+    path: /etc/openclash/ruleset/DisneyPlus_Domain.yaml
+    url: https://ruleset.skk.moe/List/DisneyPlus/Domain.yaml
+    interval: 86400
+
+  Netflix/Domain:
+    type: http
+    behavior: domain
+    path: /etc/openclash/ruleset/Netflix_Domain.yaml
+    url: https://ruleset.skk.moe/List/Netflix/Domain.yaml
+    interval: 86400
+
+  GitHub/Domain:
+    type: http
+    behavior: domain
+    path: /etc/openclash/ruleset/GitHub_Domain.yaml
+    url: https://ruleset.skk.moe/List/GitHub/Domain.yaml
+    interval: 86400
+
+  PayPal/Domain:
+    type: http
+    behavior: domain
+    path: /etc/openclash/ruleset/PayPal_Domain.yaml
+    url: https://ruleset.skk.moe/List/PayPal/Domain.yaml
+    interval: 86400
+
+  TikTok/Domain:
+    type: http
+    behavior: domain
+    path: /etc/openclash/ruleset/TikTok_Domain.yaml
+    url: https://ruleset.skk.moe/List/TikTok/Domain.yaml
+    interval: 86400
+
 rules:
+  - RULE-SET,Domestic/Domain,🌏 国内网站
+  - RULE-SET,Domestic/IPCIDR,🌏 国内网站
+  - RULE-SET,Global/Global,🌐 国际网站
+
   - RULE-SET,StreamingMedia/Domain,📺 流媒体
   - RULE-SET,StreamingMedia/IPCIDR,📺 流媒体
   - RULE-SET,StreamingMedia/ASN,📺 流媒体
@@ -167,6 +303,14 @@ rules:
   - RULE-SET,OpenAI/IPCIDR,🤖 OpenAI
   - RULE-SET,OpenAI/ASN,🤖 OpenAI
   - RULE-SET,Block/Ads,⛔ 广告拦截
+  - RULE-SET,YouTube/Domain,📹 YouTube
+  - RULE-SET,Google/Domain,🧠 Google
+  - RULE-SET,Telegram/Domain,✈️ Telegram
+  - RULE-SET,DisneyPlus/Domain,🐭 Disney+
+  - RULE-SET,Netflix/Domain,🎬 Netflix
+  - RULE-SET,GitHub/Domain,🧬 GitHub
+  - RULE-SET,PayPal/Domain,💰 PayPal
+  - RULE-SET,TikTok/Domain,🎵 TikTok
   - RULE-SET,Global/Global,🌍 国外网站
   - RULE-SET,Global/China,DIRECT
   - MATCH,🐟 漏网之鱼
