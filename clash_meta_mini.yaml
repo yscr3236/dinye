@@ -12,9 +12,9 @@ dns:
   nameserver:
     - https://doh.pub/dns-query
     - https://dns.alidns.com/dns-query
-  fallback:
-    - tls://1.1.1.1:853
-    - tls://8.8.8.8:853
+  fallback: []
+  default-nameserver:
+    - 223.5.5.5
   fallback-filter:
     geoip: true
     ipcidr:
