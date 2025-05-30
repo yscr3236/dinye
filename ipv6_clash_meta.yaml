@@ -1,40 +1,57 @@
 mixed-port: 7890
 allow-lan: true
+bind-address: '*'
 mode: rule
 log-level: info
+ipv6: true
+
 external-controller: 0.0.0.0:9090
+external-ui: "/etc/openclash/dashboard"
 secret: ""
 
 dns:
   enable: true
+  listen: 0.0.0.0:53
   ipv6: true
-  listen: "[::]:7874"
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
   fake-ip-filter:
-    - "*.lan"
-    - localhost
+    - "+.lan"
+    - "+.local"
+    - "+.localdomain"
+    - "localhost.ptlogin2.qq.com"
+    - "*.srv.nintendo.net"
+    - "stun.*.*"
+    - "*.stun.*.*"
+    - "*.stun.*"
+    - "*.msftconnecttest.com"
+    - "*.msftncsi.com"
+    - "*.google.com"
+    - "*.facebook.com"
+    - "dns.google"
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+    - "[2400:3200::1]"
   nameserver:
-    - https://dns.alidns.com/dns-query
     - https://doh.pub/dns-query
-    - https://dns.cloudflare.com/dns-query
-    - tls://dns.rubyfish.cn:853
-  fallback:
-    - https://dns.cloudflare.com/dns-query
-    - tls://1.1.1.1:853
-    - tls://2606:4700:4700::1111:853
+    - https://dns.alidns.com/dns-query
+    - tls://223.5.5.5:853
+    - tls://120.53.53.53:853
     - tls://[2400:3200::1]:853
+    - https://[2400:3200:baba::1]/dns-query
+  fallback:
+    - https://1.1.1.1/dns-query
+    - https://dns.google/dns-query
+    - https://doh.opendns.com/dns-query
+    - tls://1.0.0.1:853
+    - https://[2620:fe::fe]/dns-query
+    - tls://[2606:4700:4700::1111]:853
   fallback-filter:
     geoip: true
     geoip-code: CN
     ipcidr:
       - 240.0.0.0/4
-  default-nameserver:
-    - 223.5.5.5
-    - 114.114.114.114
-    - 1.1.1.1
-    - 2606:4700:4700::1111
-    - 2400:3200::1
 
 tun:
   enable: true
@@ -42,41 +59,35 @@ tun:
   auto-route: true
   auto-detect-interface: true
   dns-hijack:
-    - 198.18.0.2:53
-    - "[::1]:53"
-  mtu: 9000
-  strict-route: true
+    - any:53
+    - any:5353
+    - any:853
+    - "[::]:53"
+    - "[::]:5353"
+    - "[::]:853"
+
+profile:
+  store-selected: true
+  store-fake-ip: true
 
 proxy-providers:
   hxyun:
     type: http
-    path: /etc/openclash/proxy_providers/hxyun.yaml
-    url: 机场订阅
+    url: "机场订阅"
     interval: 86400
+    path: /etc/openclash/proxy_providers/hxyun.yaml
     health-check:
       enable: true
       interval: 600
+      lazy: true
       url: http://cp.cloudflare.com/generate_204
 
 proxy-groups:
-  - name: 🌏 国内网站
-    type: select
-    proxies:
-      - DIRECT
-      - 代理
-
-  - name: 🌐 国际网站
-    type: select
-    proxies:
-      - 代理
-      - DIRECT
-
-  - name: 代理
+  - name: 🌍 国外流量
     type: select
     proxies:
       - ♻️ 自动选择
       - DIRECT
-      - REJECT
     use:
       - hxyun
 
@@ -87,254 +98,253 @@ proxy-groups:
     url: http://cp.cloudflare.com/generate_204
     interval: 300
 
-  - name: 🌍 国外网站
+  - name: 📺 奈飞 Netflix
     type: select
-    proxies: [代理, DIRECT]
+    proxies:
+      - 🌍 国外流量
+      - ♻️ 自动选择
+      - DIRECT
 
-  - name: 📲 社交媒体
+  - name: 📺 哔哩哔哩
     type: select
-    proxies: [代理, DIRECT]
+    proxies:
+      - DIRECT
+      - ♻️ 自动选择
+      - 🌍 国外流量
 
-  - name: 🎮 游戏服务
+  - name: 🎮 游戏
     type: select
-    proxies: [代理, DIRECT]
+    proxies:
+      - ♻️ 自动选择
+      - 🌍 国外流量
+      - DIRECT
 
-  - name: 📺 流媒体
+  - name: 🧠 OpenAI
     type: select
-    proxies: [代理, DIRECT]
-
-  - name: 🔍 搜索引擎
-    type: select
-    proxies: [代理, DIRECT]
-
-  - name: 🤖 OpenAI
-    type: select
-    proxies: [代理, DIRECT]
-
-  - name: ⛔ 广告拦截
-    type: select
-    proxies: [REJECT, DIRECT]
-
-  - name: 🐟 漏网之鱼
-    type: select
-    proxies: [代理, DIRECT]
+    proxies:
+      - ♻️ 自动选择
+      - 🌍 国外流量
+      - DIRECT
 
   - name: 📹 YouTube
     type: select
-    proxies: [代理, DIRECT]
+    proxies:
+      - 🌍 国外流量
+      - ♻️ 自动选择
+      - DIRECT
 
-  - name: 🧠 Google
+  - name: 🌍 Google
     type: select
-    proxies: [代理, DIRECT]
+    proxies:
+      - 🌍 国外流量
+      - ♻️ 自动选择
+      - DIRECT
 
-  - name: ✈️ Telegram
+  - name: 🧠 ChatGPT
     type: select
-    proxies: [代理, DIRECT]
+    proxies:
+      - 🧠 OpenAI
+      - 🌍 国外流量
+      - ♻️ 自动选择
 
-  - name: 🐭 Disney+
+  - name: 🤖 Claude1
     type: select
-    proxies: [代理, DIRECT]
+    proxies:
+      - 🌍 国外流量
+      - ♻️ 自动选择
+      - DIRECT
 
-  - name: 🎬 Netflix
+  - name: 🐙 GitHub
     type: select
-    proxies: [代理, DIRECT]
+    proxies:
+      - 🌍 国外流量
+      - ♻️ 自动选择
+      - DIRECT
 
-  - name: 🧬 GitHub
+  - name: 📦 Telegram
     type: select
-    proxies: [代理, DIRECT]
+    proxies:
+      - 🌍 国外流量
+      - ♻️ 自动选择
+      - DIRECT
 
-  - name: 💰 PayPal
+  - name: 📱 TikTok
     type: select
-    proxies: [代理, DIRECT]
+    proxies:
+      - 🌍 国外流量
+      - ♻️ 自动选择
+      - DIRECT
 
-  - name: 🎵 TikTok
+  - name: 🍎 Apple
     type: select
-    proxies: [代理, DIRECT]
+    proxies:
+      - DIRECT
+      - ♻️ 自动选择
+      - 🌍 国外流量
 
-  - name: 🇭🇰 香港节点
+  - name: 🌐 国外网站
     type: select
-    use: [hxyun]
-    filter: '🇭🇰|HK|Hong Kong'
+    proxies:
+      - 🌍 国外流量
+      - ♻️ 自动选择
+      - DIRECT
 
-  - name: 🇹🇼 台湾节点
+  - name: 🇨🇳 国内网站
     type: select
-    use: [hxyun]
-    filter: '🇹🇼|TW|Taiwan'
+    proxies:
+      - DIRECT
+      - ♻️ 自动选择
 
-  - name: 🇯🇵 日本节点
+  - name: 🚫 拦截广告
     type: select
-    use: [hxyun]
-    filter: '🇯🇵|JP|Japan'
+    proxies:
+      - REJECT
+      - DIRECT
 
-  - name: 🇸🇬 新加坡节点
+  - name: 🐟 漏网之鱼
     type: select
-    use: [hxyun]
-    filter: '🇸🇬|SG|Singapore'
-
-  - name: 🇺🇸 美国节点
-    type: select
-    use: [hxyun]
-    filter: '🇺🇸|US|United States'
-
-  - name: 🌐 其他节点
-    type: select
-    use: [hxyun]
-    filter: '^(?!.*(香港|HK|Taiwan|TW|JP|Japan|SG|Singapore|US|United)).*$'
+    proxies:
+      - 🌍 国外流量
+      - ♻️ 自动选择
+      - DIRECT
 
 rule-providers:
-  Domestic/Domain:
+  netflix:
     type: http
-    behavior: domain
-    path: /etc/openclash/ruleset/Domestic_Domain.yaml
-    url: https://ruleset.skk.moe/List/Domestic/Domain.yaml
+    behavior: classical
+    url: https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/netflix.yaml
+    path: ./ruleset/netflix.yaml
     interval: 86400
 
-  Domestic/IPCIDR:
+  bilibili:
+    type: http
+    behavior: classical
+    url: https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/bilibili.yaml
+    path: ./ruleset/bilibili.yaml
+    interval: 86400
+
+  openai:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/DivineEngine/Profiles@master/Clash/RuleSet/OpenAI.yaml
+    path: ./ruleset/openai.yaml
+    interval: 86400
+
+  youtube:
+    type: http
+    behavior: classical
+    url: https://fastly.jsdelivr.net/gh/DivineEngine/Profiles@master/Clash/RuleSet/StreamingMedia/YouTube.yaml
+    path: ./ruleset/youtube.yaml
+    interval: 86400
+
+  google:
+    type: http
+    behavior: classical
+    url: https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/google.yaml
+    path: ./ruleset/google.yaml
+    interval: 86400
+
+  chatgpt:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/DivineEngine/Profiles@master/Clash/RuleSet/OpenAI.yaml
+    path: ./ruleset/chatgpt.yaml
+    interval: 86400
+
+  claude:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/claude.yaml
+    path: ./ruleset/claude.yaml
+    interval: 86400
+
+  github:
+    type: http
+    behavior: classical
+    url: https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/github.yaml
+    path: ./ruleset/github.yaml
+    interval: 86400
+
+  telegram:
+    type: http
+    behavior: classical
+    url: https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/telegram.yaml
+    path: ./ruleset/telegram.yaml
+    interval: 86400
+
+  tiktok:
+    type: http
+    behavior: classical
+    url: https://cdn.jsdelivr.net/gh/DivineEngine/Profiles@master/Clash/RuleSet/StreamingMedia/TikTok.yaml
+    path: ./ruleset/tiktok.yaml
+    interval: 86400
+
+  apple:
+    type: http
+    behavior: classical
+    url: https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/apple.yaml
+    path: ./ruleset/apple.yaml
+    interval: 86400
+
+  global:
+    type: http
+    behavior: classical
+    url: https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/global.yaml
+    path: ./ruleset/global.yaml
+    interval: 86400
+
+  china:
+    type: http
+    behavior: classical
+    url: https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/china.yaml
+    path: ./ruleset/china.yaml
+    interval: 86400
+
+  advertising:
+    type: http
+    behavior: classical
+    url: https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/reject.yaml
+    path: ./ruleset/reject.yaml
+    interval: 86400
+
+  lancidr:
     type: http
     behavior: ipcidr
-    path: /etc/openclash/ruleset/Domestic_IP.yaml
-    url: https://ruleset.skk.moe/List/Domestic/IP.yaml
+    url: https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/lancidr.yaml
+    path: ./ruleset/lancidr.yaml
     interval: 86400
 
-  StreamingMedia/Domain:
-    type: http
-    behavior: domain
-    path: /etc/openclash/ruleset/StreamingMedia_Domain.yaml
-    url: https://ruleset.skk.moe/List/StreamingMedia/Domain.yaml
-    interval: 86400
-
-  StreamingMedia/IPCIDR:
+  cncidr:
     type: http
     behavior: ipcidr
-    path: /etc/openclash/ruleset/StreamingMedia_IP.yaml
-    url: https://ruleset.skk.moe/List/StreamingMedia/IP.yaml
+    url: https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/cncidr.yaml
+    path: ./ruleset/cncidr.yaml
     interval: 86400
 
-  StreamingMedia/ASN:
+  applications:
     type: http
     behavior: classical
-    path: /etc/openclash/ruleset/StreamingMedia_ASN.yaml
-    url: https://ruleset.skk.moe/List/StreamingMedia/ASN.yaml
-    interval: 86400
-
-  OpenAI/Domain:
-    type: http
-    behavior: domain
-    path: /etc/openclash/ruleset/OpenAI_Domain.yaml
-    url: https://ruleset.skk.moe/List/OpenAI/Domain.yaml
-    interval: 86400
-
-  OpenAI/IPCIDR:
-    type: http
-    behavior: ipcidr
-    path: /etc/openclash/ruleset/OpenAI_IP.yaml
-    url: https://ruleset.skk.moe/List/OpenAI/IP.yaml
-    interval: 86400
-
-  OpenAI/ASN:
-    type: http
-    behavior: classical
-    path: /etc/openclash/ruleset/OpenAI_ASN.yaml
-    url: https://ruleset.skk.moe/List/OpenAI/ASN.yaml
-    interval: 86400
-
-  Global/Global:
-    type: http
-    behavior: classical
-    path: /etc/openclash/ruleset/Global.yaml
-    url: https://ruleset.skk.moe/List/Global/Global.yaml
-    interval: 86400
-
-  Global/China:
-    type: http
-    behavior: classical
-    path: /etc/openclash/ruleset/China.yaml
-    url: https://ruleset.skk.moe/List/Global/China.yaml
-    interval: 86400
-
-  Block/Ads:
-    type: http
-    behavior: classical
-    path: /etc/openclash/ruleset/Block_Ads.yaml
-    url: https://ruleset.skk.moe/List/Block/Ads.yaml
-    interval: 86400
-
-  YouTube/Domain:
-    type: http
-    behavior: domain
-    path: /etc/openclash/ruleset/YouTube_Domain.yaml
-    url: https://ruleset.skk.moe/List/YouTube/Domain.yaml
-    interval: 86400
-
-  Google/Domain:
-    type: http
-    behavior: domain
-    path: /etc/openclash/ruleset/Google_Domain.yaml
-    url: https://ruleset.skk.moe/List/Google/Domain.yaml
-    interval: 86400
-
-  Telegram/Domain:
-    type: http
-    behavior: domain
-    path: /etc/openclash/ruleset/Telegram_Domain.yaml
-    url: https://ruleset.skk.moe/List/Telegram/Domain.yaml
-    interval: 86400
-
-  DisneyPlus/Domain:
-    type: http
-    behavior: domain
-    path: /etc/openclash/ruleset/DisneyPlus_Domain.yaml
-    url: https://ruleset.skk.moe/List/DisneyPlus/Domain.yaml
-    interval: 86400
-
-  Netflix/Domain:
-    type: http
-    behavior: domain
-    path: /etc/openclash/ruleset/Netflix_Domain.yaml
-    url: https://ruleset.skk.moe/List/Netflix/Domain.yaml
-    interval: 86400
-
-  GitHub/Domain:
-    type: http
-    behavior: domain
-    path: /etc/openclash/ruleset/GitHub_Domain.yaml
-    url: https://ruleset.skk.moe/List/GitHub/Domain.yaml
-    interval: 86400
-
-  PayPal/Domain:
-    type: http
-    behavior: domain
-    path: /etc/openclash/ruleset/PayPal_Domain.yaml
-    url: https://ruleset.skk.moe/List/PayPal/Domain.yaml
-    interval: 86400
-
-  TikTok/Domain:
-    type: http
-    behavior: domain
-    path: /etc/openclash/ruleset/TikTok_Domain.yaml
-    url: https://ruleset.skk.moe/List/TikTok/Domain.yaml
+    url: https://fastly.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/applications.yaml
+    path: ./ruleset/applications.yaml
     interval: 86400
 
 rules:
-  - RULE-SET,Domestic/Domain,🌏 国内网站
-  - RULE-SET,Domestic/IPCIDR,🌏 国内网站
-  - RULE-SET,Global/Global,🌐 国际网站
-
-  - RULE-SET,StreamingMedia/Domain,📺 流媒体
-  - RULE-SET,StreamingMedia/IPCIDR,📺 流媒体
-  - RULE-SET,StreamingMedia/ASN,📺 流媒体
-  - RULE-SET,OpenAI/Domain,🤖 OpenAI
-  - RULE-SET,OpenAI/IPCIDR,🤖 OpenAI
-  - RULE-SET,OpenAI/ASN,🤖 OpenAI
-  - RULE-SET,Block/Ads,⛔ 广告拦截
-  - RULE-SET,YouTube/Domain,📹 YouTube
-  - RULE-SET,Google/Domain,🧠 Google
-  - RULE-SET,Telegram/Domain,✈️ Telegram
-  - RULE-SET,DisneyPlus/Domain,🐭 Disney+
-  - RULE-SET,Netflix/Domain,🎬 Netflix
-  - RULE-SET,GitHub/Domain,🧬 GitHub
-  - RULE-SET,PayPal/Domain,💰 PayPal
-  - RULE-SET,TikTok/Domain,🎵 TikTok
-  - RULE-SET,Global/Global,🌍 国外网站
-  - RULE-SET,Global/China,DIRECT
+  - RULE-SET,netflix,📺 奈飞 Netflix
+  - RULE-SET,bilibili,📺 哔哩哔哩
+  - RULE-SET,openai,🧠 OpenAI
+  - RULE-SET,youtube,📹 YouTube
+  - RULE-SET,google,🌍 Google
+  - RULE-SET,chatgpt,🧠 ChatGPT
+  - RULE-SET,claude,🤖 Claude1
+  - RULE-SET,github,🐙 GitHub
+  - RULE-SET,telegram,📦 Telegram
+  - RULE-SET,tiktok,📱 TikTok
+  - RULE-SET,apple,🍎 Apple
+  - RULE-SET,global,🌐 国外网站
+  - RULE-SET,china,🇨🇳 国内网站
+  - RULE-SET,advertising,🚫 拦截广告
+  - RULE-SET,applications,🌍 国外流量
+  - RULE-SET,cncidr,DIRECT
+  - RULE-SET,lancidr,DIRECT
+  - GEOIP,CN,DIRECT
   - MATCH,🐟 漏网之鱼
