@@ -1,0 +1,242 @@
+mixed-port: 7890
+tproxy-port: 7891
+allow-lan: true
+bind-address: "*"
+mode: rule
+log-level: info
+ipv6: true
+unified-delay: true
+tcp-concurrent: true
+external-controller: 0.0.0.0:9090
+external-ui: "/usr/share/openclash/ui"
+secret: ""
+profile:
+  store-selected: true
+  store-fake-ip: true
+
+dns:
+  enable: true
+  listen: 0.0.0.0:1053
+  ipv6: true
+  enhanced-mode: fake-ip
+  fake-ip-filter:
+    - "+.lan"
+    - "+.local"
+    - "+.internal"
+    - "time.*.com"
+    - "ntp.*.com"
+    - "localhost"
+    - "stun.*.*"
+    - "clash"
+    - "dns.msftncsi.com"
+    - "www.msftncsi.com"
+  nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+  fallback:
+    - https://dns.google/dns-query
+    - tls://1.1.1.1:853
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4
+
+proxy-groups:
+  - name: "🚀 节点选择"
+    type: select
+    proxies:
+      - "♻️ 自动选择"
+      - "🇭🇰 香港"
+      - "🇸🇬 新加坡"
+      - "🇯🇵 日本"
+      - "🇺🇸 美国"
+      - DIRECT
+
+  - name: "♻️ 自动选择"
+    type: url-test
+    use:
+      - 🔗机场节点
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+
+  - name: "🇭🇰 香港"
+    type: select
+    use:
+      - 🔗机场节点
+    filter: "香港|HK"
+
+  - name: "🇸🇬 新加坡"
+    type: select
+    use:
+      - 🔗机场节点
+    filter: "新加坡|SG"
+
+  - name: "🇯🇵 日本"
+    type: select
+    use:
+      - 🔗机场节点
+    filter: "日本|JP"
+
+  - name: "🇺🇸 美国"
+    type: select
+    use:
+      - 🔗机场节点
+    filter: "美国|US"
+
+  - { name: "📹 YouTube", type: select, proxies: ["🚀 节点选择", "🇯🇵 日本", "🇺🇸 美国"] }
+  - { name: "🌍 Google", type: select, proxies: ["🚀 节点选择", "🇯🇵 日本", "🇺🇸 美国"] }
+  - { name: "🧠 OpenAI", type: select, proxies: ["🚀 节点选择", "🇺🇸 美国", "🇯🇵 日本"] }
+  - { name: "🤖 Claude1", type: select, proxies: ["🚀 节点选择", "🇺🇸 美国"] }
+  - { name: "🐙 GitHub", type: select, proxies: ["🚀 节点选择", "♻️ 自动选择", "🇯🇵 日本", DIRECT] }
+  - { name: "📦 Telegram", type: select, proxies: ["🚀 节点选择", "🇸🇬 新加坡", "🇯🇵 日本", "🇺🇸 美国"] }
+  - { name: "📱 TikTok", type: select, proxies: ["🚀 节点选择", "🇯🇵 日本", "🇺🇸 美国"] }
+  - { name: "🎬 Netflix", type: select, proxies: ["🚀 节点选择", "🇭🇰 香港", "🇯🇵 日本", "🇺🇸 美国"] }
+  - { name: "🍎 Apple", type: select, proxies: ["🚀 节点选择", DIRECT] }
+  - { name: "🌐 国外网站", type: select, proxies: ["🚀 节点选择", "♻️ 自动选择", DIRECT] }
+  - { name: "🇨🇳 国内网站", type: select, proxies: [DIRECT, "🚀 节点选择"] }
+  - { name: "🛑 拦截广告", type: select, proxies: [REJECT, DIRECT] }
+  - { name: "🐟 漏网之鱼", type: select, proxies: ["🚀 节点选择", DIRECT] }
+
+proxy-providers:
+  🔗机场节点:
+    type: http
+    url: "机场订阅"
+    interval: 86400
+    path: ./providers/proxies.yaml
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+
+rule-providers:
+  reject:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/reject.yaml
+    path: ./rules/reject.yaml
+    interval: 86400
+
+  advertising:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/advertising.yaml
+    path: ./rules/advertising.yaml
+    interval: 86400
+
+  youtube:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/youtube.yaml
+    path: ./rules/youtube.yaml
+    interval: 86400
+
+  google:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/google.yaml
+    path: ./rules/google.yaml
+    interval: 86400
+
+  openai:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/openai.yaml
+    path: ./rules/openai.yaml
+    interval: 86400
+
+  claude:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/claude.yaml
+    path: ./rules/claude.yaml
+    interval: 86400
+
+  github:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/github.yaml
+    path: ./rules/github.yaml
+    interval: 86400
+
+  telegram:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/telegram.yaml
+    path: ./rules/telegram.yaml
+    interval: 86400
+
+  tiktok:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/tiktok.yaml
+    path: ./rules/tiktok.yaml
+    interval: 86400
+
+  netflix:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/netflix.yaml
+    path: ./rules/netflix.yaml
+    interval: 86400
+
+  apple:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/apple.yaml
+    path: ./rules/apple.yaml
+    interval: 86400
+
+  china:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/china.yaml
+    path: ./rules/china.yaml
+    interval: 86400
+
+  global:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/global.yaml
+    path: ./rules/global.yaml
+    interval: 86400
+
+  applications:
+    type: http
+    behavior: classical
+    url: https://rule-provider.aoe.top/applications.yaml
+    path: ./rules/applications.yaml
+    interval: 86400
+
+  cncidr:
+    type: http
+    behavior: ipcidr
+    url: https://rule-provider.aoe.top/cncidr.yaml
+    path: ./rules/cncidr.yaml
+    interval: 86400
+
+  lancidr:
+    type: http
+    behavior: ipcidr
+    url: https://rule-provider.aoe.top/lancidr.yaml
+    path: ./rules/lancidr.yaml
+    interval: 86400
+
+rules:
+  - RULE-SET,youtube,📹 YouTube
+  - RULE-SET,google,🌍 Google
+  - RULE-SET,openai,🧠 OpenAI
+  - RULE-SET,claude,🤖 Claude1
+  - RULE-SET,github,🐙 GitHub
+  - RULE-SET,telegram,📦 Telegram
+  - RULE-SET,tiktok,📱 TikTok
+  - RULE-SET,netflix,🎬 Netflix
+  - RULE-SET,apple,🍎 Apple
+  - RULE-SET,global,🌐 国外网站
+  - RULE-SET,china,🇨🇳 国内网站
+  - RULE-SET,advertising,🛑 拦截广告
+  - RULE-SET,applications,🇨🇳 国内网站
+  - RULE-SET,cncidr,DIRECT
+  - RULE-SET,lancidr,DIRECT
+  - GEOIP,CN,DIRECT
+  - MATCH,🐟 漏网之鱼
