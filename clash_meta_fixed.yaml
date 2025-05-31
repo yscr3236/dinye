@@ -1,0 +1,200 @@
+mixed-port: 7890
+allow-lan: true
+bind-address: '*'
+mode: rule
+log-level: info
+ipv6: true
+unified-delay: true
+tcp-concurrent: true
+
+external-controller: 0.0.0.0:9090
+external-ui: "/etc/openclash/ui"
+
+experimental:
+  sniff-tls-sni: true
+
+sniffer:
+  enable: true
+  sniffing: 
+    - tls
+    - http
+  skip-domain:
+    - Mijia Cloud
+    - dlg.io.mi.com
+    - connected.miliao.com
+  force-domain:
+    - +.v2ex.com
+
+profile:
+  store-selected: true
+  store-fake-ip: true
+
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  ipv6: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  nameserver:
+    - 127.0.0.1:5335
+  fallback:
+    - https://dns.google/dns-query
+    - https://cloudflare-dns.com/dns-query
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4
+  disable-cache: true
+  dns-inbound-intercept: true
+
+tun:
+  enable: true
+  stack: mixed
+  auto-route: true
+  auto-detect-interface: true
+
+proxy-providers:
+  hxyun:
+    type: http
+    path: /etc/openclash/providers/proxies/hxyun.yaml
+    url: "机场订阅"
+    interval: 86400
+    health-check:
+      enable: true
+      lazy: true
+      url: http://cp.cloudflare.com/generate_204
+      interval: 300
+
+proxy-groups:
+  - name: "🚀 节点选择"
+    type: select
+    proxies:
+      - ♻️ 自动选择
+      - 🇭🇰 香港
+      - 🇸🇬 新加坡
+      - 🇯🇵 日本
+      - 🇺🇸 美国
+      - 🇹🇼 台湾
+      - DIRECT
+      - REJECT
+
+  - name: ♻️ 自动选择
+    type: url-test
+    use:
+      - hxyun
+    url: http://cp.cloudflare.com/generate_204
+    interval: 300
+
+  - name: ♻️ 负载均衡
+    type: load-balance
+    strategy: round-robin
+    use:
+      - hxyun
+
+  - name: 🧪 故障转移
+    type: fallback
+    use:
+      - hxyun
+    url: http://cp.cloudflare.com/generate_204
+    interval: 300
+
+  - name: 🇭🇰 香港
+    type: select
+    use: [hxyun]
+    filter: "(?i)🇭🇰|HK|Hong"
+
+  - name: 🇸🇬 新加坡
+    type: select
+    use: [hxyun]
+    filter: "(?i)🇸🇬|SG|Singapore"
+
+  - name: 🇯🇵 日本
+    type: select
+    use: [hxyun]
+    filter: "(?i)🇯🇵|JP|Japan"
+
+  - name: 🇺🇸 美国
+    type: select
+    use: [hxyun]
+    filter: "(?i)🇺🇸|US|United States"
+
+  - name: 🇹🇼 台湾
+    type: select
+    use: [hxyun]
+    filter: "(?i)🇹🇼|TW|Taiwan"
+
+  - {name: 📹 YouTube, type: select, proxies: [🚀 节点选择, ♻️ 自动选择, 🇭🇰 香港, 🇯🇵 日本, 🇺🇸 美国, 🇹🇼 台湾, DIRECT]}
+  - {name: 🌍 Google, type: select, proxies: [🚀 节点选择, ♻️ 自动选择, 🇭🇰 香港, 🇯🇵 日本, 🇺🇸 美国, 🇹🇼 台湾, DIRECT]}
+  - {name: 🧠 ChatGPT, type: select, proxies: [🚀 节点选择, ♻️ 自动选择, 🇺🇸 美国, 🇯🇵 日本, 🇸🇬 新加坡]}
+  - {name: 🤖 Claude1, type: select, proxies: [🚀 节点选择, 🇺🇸 美国]}
+  - {name: 🐙 GitHub, type: select, proxies: [🚀 节点选择, ♻️ 自动选择, 🇯🇵 日本, DIRECT]}
+  - {name: 📦 Telegram, type: select, proxies: [🚀 节点选择, ♻️ 自动选择, 🇭🇰 香港, 🇸🇬 新加坡, 🇹🇼 台湾, DIRECT]}
+  - {name: 📱 TikTok, type: select, proxies: [🚀 节点选择, 🇯🇵 日本, 🇺🇸 美国, 🇹🇼 台湾]}
+  - {name: 🎬 Netflix, type: select, proxies: [🚀 节点选择, 🇭🇰 香港, 🇯🇵 日本, 🇺🇸 美国, 🇹🇼 台湾]}
+  - {name: 🍎 Apple, type: select, proxies: [🚀 节点选择, DIRECT]}
+  - {name: 🌐 国外网站, type: select, proxies: [🚀 节点选择, ♻️ 自动选择, 🇹🇼 台湾, DIRECT]}
+  - {name: 🇨🇳 国内网站, type: select, proxies: [DIRECT, 🚀 节点选择]}
+  - {name: 🛑 广告拦截, type: select, proxies: [REJECT, DIRECT]}
+  - {name: 🐟 漏网之鱼, type: select, proxies: [🚀 节点选择, DIRECT]}
+
+rule-providers:
+  reject:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/reject.yaml
+    path: /etc/openclash/rules/reject.yaml
+    interval: 86400
+
+  china:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/china.yaml
+    path: /etc/openclash/rules/china.yaml
+    interval: 86400
+
+  google:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/google.yaml
+    path: /etc/openclash/rules/google.yaml
+    interval: 86400
+
+  youtube:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/youtube.yaml
+    path: /etc/openclash/rules/youtube.yaml
+    interval: 86400
+
+  telegram:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/telegram.yaml
+    path: /etc/openclash/rules/telegram.yaml
+    interval: 86400
+
+  netflix:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/netflix.yaml
+    path: /etc/openclash/rules/netflix.yaml
+    interval: 86400
+
+  openai:
+    type: http
+    behavior: domain
+    url: https://rule-provider.aoe.top/openai.yaml
+    path: /etc/openclash/rules/openai.yaml
+    interval: 86400
+
+rules:
+  - RULE-SET,youtube,📹 YouTube
+  - RULE-SET,google,🌍 Google
+  - RULE-SET,openai,🧠 ChatGPT
+  - RULE-SET,telegram,📦 Telegram
+  - RULE-SET,netflix,🎬 Netflix
+  - RULE-SET,china,🇨🇳 国内网站
+  - RULE-SET,reject,🛑 广告拦截
+  - GEOIP,CN,DIRECT
+  - MATCH,🐟 漏网之鱼
