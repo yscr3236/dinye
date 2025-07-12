@@ -1,242 +1,327 @@
-mixed-port: 7890
-tproxy-port: 7891
+port: 7890
+socks-port: 7891
 allow-lan: true
-bind-address: "*"
-mode: rule
 log-level: info
-ipv6: true
-unified-delay: true
-tcp-concurrent: true
 external-controller: 0.0.0.0:9090
-external-ui: "/usr/share/openclash/ui"
-secret: ""
-profile:
-  store-selected: true
-  store-fake-ip: true
+
+tun:
+  enable: true
+  stack: system
+  dns-hijack:
+    - any:53
+  auto-route: true
+  auto-detect-interface: true
 
 dns:
   enable: true
-  listen: 0.0.0.0:1053
+  listen: 0.0.0.0:53
   ipv6: true
   enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
   fake-ip-filter:
-    - "+.lan"
-    - "+.local"
-    - "+.internal"
-    - "time.*.com"
-    - "ntp.*.com"
-    - "localhost"
-    - "stun.*.*"
-    - "clash"
-    - "dns.msftncsi.com"
-    - "www.msftncsi.com"
+    - '+.lan'
+    - '+.local'
+    - 'router.asus.com'
+    - '*.msftconnecttest.com'
+    - '*.msftncsi.com'
+    - 'stun.*.*'
+    - 'dns.google'
   nameserver:
     - https://dns.alidns.com/dns-query
     - https://doh.pub/dns-query
+    - tls://223.5.5.5:853
   fallback:
     - https://dns.google/dns-query
+    - https://1.1.1.1/dns-query
     - tls://1.1.1.1:853
   fallback-filter:
     geoip: true
     geoip-code: CN
     ipcidr:
       - 240.0.0.0/4
+  nameserver-policy:
+    'geosite:cn':
+      - https://dns.alidns.com/dns-query
+
+proxy-providers:
+  my-subscription:
+    type: http
+    url: "[在此填入你的订阅链接]"
+    interval: 3600
+    path: ./providers/my-subscription.yaml
+    health-check:
+      enable: true
+      url: http://www.gstatic.com/generate_204
+      interval: 600
 
 proxy-groups:
   - name: "🚀 节点选择"
     type: select
     proxies:
       - "♻️ 自动选择"
-      - "🇭🇰 香港"
-      - "🇸🇬 新加坡"
-      - "🇯🇵 日本"
-      - "🇺🇸 美国"
-      - DIRECT
+      - "🔰 故障转移"
+      - "DIRECT"
+      - "REJECT"
 
   - name: "♻️ 自动选择"
-    type: url-test
-    use:
-      - 🔗机场节点
-    url: "http://www.gstatic.com/generate_204"
+    type: fallback
+    use: [my-subscription]
+    url: http://www.gstatic.com/generate_204
     interval: 300
 
-  - name: "🇭🇰 香港"
+  - name: "🔰 故障转移"
+    type: fallback
+    use: [my-subscription]
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "✈️ 国外流量"
     type: select
-    use:
-      - 🔗机场节点
-    filter: "香港|HK"
+    proxies:
+      - "♻️ 自动选择"
+      - "🔰 故障转移"
+      - "DIRECT"
 
-  - name: "🇸🇬 新加坡"
+  - name: "🏠 国内流量"
     type: select
-    use:
-      - 🔗机场节点
-    filter: "新加坡|SG"
+    proxies:
+      - "DIRECT"
+      - "✈️ 国外流量"
 
-  - name: "🇯🇵 日本"
+  - name: "🛑 广告拦截"
     type: select
-    use:
-      - 🔗机场节点
-    filter: "日本|JP"
+    proxies:
+      - "REJECT"
+      - "DIRECT"
 
-  - name: "🇺🇸 美国"
+  - name: "📹 YouTube-优选"
+    type: fallback
+    use: [my-subscription]
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "📹 YouTube"
     type: select
-    use:
-      - 🔗机场节点
-    filter: "美国|US"
+    proxies:
+      - "📹 YouTube-优选"
+      - "♻️ 自动选择"
+      - "🔰 故障转移"
+      - "✈️ 国外流量"
+      - "DIRECT"
 
-  - { name: "📹 YouTube", type: select, proxies: ["🚀 节点选择", "🇯🇵 日本", "🇺🇸 美国"] }
-  - { name: "🌍 Google", type: select, proxies: ["🚀 节点选择", "🇯🇵 日本", "🇺🇸 美国"] }
-  - { name: "🧠 OpenAI", type: select, proxies: ["🚀 节点选择", "🇺🇸 美国", "🇯🇵 日本"] }
-  - { name: "🤖 Claude1", type: select, proxies: ["🚀 节点选择", "🇺🇸 美国"] }
-  - { name: "🐙 GitHub", type: select, proxies: ["🚀 节点选择", "♻️ 自动选择", "🇯🇵 日本", DIRECT] }
-  - { name: "📦 Telegram", type: select, proxies: ["🚀 节点选择", "🇸🇬 新加坡", "🇯🇵 日本", "🇺🇸 美国"] }
-  - { name: "📱 TikTok", type: select, proxies: ["🚀 节点选择", "🇯🇵 日本", "🇺🇸 美国"] }
-  - { name: "🎬 Netflix", type: select, proxies: ["🚀 节点选择", "🇭🇰 香港", "🇯🇵 日本", "🇺🇸 美国"] }
-  - { name: "🍎 Apple", type: select, proxies: ["🚀 节点选择", DIRECT] }
-  - { name: "🌐 国外网站", type: select, proxies: ["🚀 节点选择", "♻️ 自动选择", DIRECT] }
-  - { name: "🇨🇳 国内网站", type: select, proxies: [DIRECT, "🚀 节点选择"] }
-  - { name: "🛑 拦截广告", type: select, proxies: [REJECT, DIRECT] }
-  - { name: "🐟 漏网之鱼", type: select, proxies: ["🚀 节点选择", DIRECT] }
+  - name: "🌍 Google-优选"
+    type: fallback
+    use: [my-subscription]
+    url: http://www.gstatic.com/generate_204
+    interval: 300
 
-proxy-providers:
-  🔗机场节点:
-    type: http
-    url: "机场订阅"
-    interval: 86400
-    path: ./providers/proxies.yaml
-    health-check:
-      enable: true
-      interval: 600
-      url: http://www.gstatic.com/generate_204
+  - name: "🌍 Google"
+    type: select
+    proxies:
+      - "🌍 Google-优选"
+      - "♻️ 自动选择"
+      - "🔰 故障转移"
+      - "✈️ 国外流量"
+      - "DIRECT"
+
+  - name: "🧠 ChatGPT-优选"
+    type: fallback
+    use: [my-subscription]
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "🧠 ChatGPT"
+    type: select
+    proxies:
+      - "🧠 ChatGPT-优选"
+      - "♻️ 自动选择"
+      - "🔰 故障转移"
+      - "✈️ 国外流量"
+      - "DIRECT"
+
+  - name: "📱 TikTok-优选"
+    type: fallback
+    use: [my-subscription]
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "📱 TikTok"
+    type: select
+    proxies:
+      - "📱 TikTok-优选"
+      - "♻️ 自动选择"
+      - "🔰 故障转移"
+      - "✈️ 国外流量"
+      - "DIRECT"
+
+  - name: "🎬 Netflix-优选"
+    type: fallback
+    use: [my-subscription]
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "🎬 Netflix"
+    type: select
+    proxies:
+      - "🎬 Netflix-优选"
+      - "♻️ 自动选择"
+      - "🔰 故障转移"
+      - "✈️ 国外流量"
+      - "DIRECT"
+
+  - name: "🍎 Apple-优选"
+    type: fallback
+    use: [my-subscription]
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "🍎 Apple"
+    type: select
+    proxies:
+      - "🍎 Apple-优选"
+      - "♻️ 自动选择"
+      - "🔰 故障转移"
+      - "✈️ 国外流量"
+      - "DIRECT"
+
+  - name: "🔮 Gemini-优选"
+    type: fallback
+    use: [my-subscription]
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "🔮 Gemini"
+    type: select
+    proxies:
+      - "🔮 Gemini-优选"
+      - "♻️ 自动选择"
+      - "🔰 故障转移"
+      - "✈️ 国外流量"
+      - "DIRECT"
 
 rule-providers:
-  reject:
+  ads:
     type: http
     behavior: domain
-    url: https://rule-provider.aoe.top/reject.yaml
-    path: ./rules/reject.yaml
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/reject.txt"
+    path: ./ruleset/ads.yaml
     interval: 86400
 
-  advertising:
+  cn_sites:
     type: http
-    behavior: domain
-    url: https://rule-provider.aoe.top/advertising.yaml
-    path: ./rules/advertising.yaml
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/direct.txt"
+    path: ./ruleset/cn_sites.yaml
     interval: 86400
 
   youtube:
     type: http
     behavior: domain
-    url: https://rule-provider.aoe.top/youtube.yaml
-    path: ./rules/youtube.yaml
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/youtube.txt"
+    path: ./ruleset/youtube.yaml
     interval: 86400
 
   google:
     type: http
     behavior: domain
-    url: https://rule-provider.aoe.top/google.yaml
-    path: ./rules/google.yaml
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/google.txt"
+    path: ./ruleset/google.yaml
     interval: 86400
 
-  openai:
+  chatgpt:
     type: http
     behavior: domain
-    url: https://rule-provider.aoe.top/openai.yaml
-    path: ./rules/openai.yaml
-    interval: 86400
-
-  claude:
-    type: http
-    behavior: domain
-    url: https://rule-provider.aoe.top/claude.yaml
-    path: ./rules/claude.yaml
-    interval: 86400
-
-  github:
-    type: http
-    behavior: domain
-    url: https://rule-provider.aoe.top/github.yaml
-    path: ./rules/github.yaml
-    interval: 86400
-
-  telegram:
-    type: http
-    behavior: domain
-    url: https://rule-provider.aoe.top/telegram.yaml
-    path: ./rules/telegram.yaml
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/openai.txt"
+    path: ./ruleset/chatgpt.yaml
     interval: 86400
 
   tiktok:
     type: http
     behavior: domain
-    url: https://rule-provider.aoe.top/tiktok.yaml
-    path: ./rules/tiktok.yaml
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/tiktok.txt"
+    path: ./ruleset/tiktok.yaml
     interval: 86400
 
   netflix:
     type: http
     behavior: domain
-    url: https://rule-provider.aoe.top/netflix.yaml
-    path: ./rules/netflix.yaml
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/netflix.txt"
+    path: ./ruleset/netflix.yaml
+    interval: 86400
+
+  telegram:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/telegram.txt"
+    path: ./ruleset/telegram.yaml
     interval: 86400
 
   apple:
     type: http
     behavior: domain
-    url: https://rule-provider.aoe.top/apple.yaml
-    path: ./rules/apple.yaml
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/apple.txt"
+    path: ./ruleset/apple.yaml
     interval: 86400
 
-  china:
+  github:
     type: http
     behavior: domain
-    url: https://rule-provider.aoe.top/china.yaml
-    path: ./rules/china.yaml
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/github.txt"
+    path: ./ruleset/github.yaml
     interval: 86400
 
-  global:
+  paypal:
     type: http
     behavior: domain
-    url: https://rule-provider.aoe.top/global.yaml
-    path: ./rules/global.yaml
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/paypal.txt"
+    path: ./ruleset/paypal.yaml
     interval: 86400
 
-  applications:
+  disney:
     type: http
-    behavior: classical
-    url: https://rule-provider.aoe.top/applications.yaml
-    path: ./rules/applications.yaml
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/disney.txt"
+    path: ./ruleset/disney.yaml
     interval: 86400
 
-  cncidr:
+  claude:
     type: http
-    behavior: ipcidr
-    url: https://rule-provider.aoe.top/cncidr.yaml
-    path: ./rules/cncidr.yaml
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/claude.txt"
+    path: ./ruleset/claude.yaml
     interval: 86400
 
-  lancidr:
+  gemini:
     type: http
-    behavior: ipcidr
-    url: https://rule-provider.aoe.top/lancidr.yaml
-    path: ./rules/lancidr.yaml
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/gemini.txt"
+    path: ./ruleset/gemini.yaml
     interval: 86400
 
 rules:
+  - RULE-SET,ads,🛑 广告拦截
   - RULE-SET,youtube,📹 YouTube
   - RULE-SET,google,🌍 Google
-  - RULE-SET,openai,🧠 OpenAI
-  - RULE-SET,claude,🤖 Claude1
-  - RULE-SET,github,🐙 GitHub
-  - RULE-SET,telegram,📦 Telegram
+  - RULE-SET,chatgpt,🧠 ChatGPT
   - RULE-SET,tiktok,📱 TikTok
   - RULE-SET,netflix,🎬 Netflix
+  - RULE-SET,telegram,📦 Telegram
   - RULE-SET,apple,🍎 Apple
-  - RULE-SET,global,🌐 国外网站
-  - RULE-SET,china,🇨🇳 国内网站
-  - RULE-SET,advertising,🛑 拦截广告
-  - RULE-SET,applications,🇨🇳 国内网站
-  - RULE-SET,cncidr,DIRECT
-  - RULE-SET,lancidr,DIRECT
-  - GEOIP,CN,DIRECT
-  - MATCH,🐟 漏网之鱼
+  - RULE-SET,github,🐙 GitHub
+  - RULE-SET,paypal,💰 PayPal
+  - RULE-SET,disney,🎠 Disney+
+  - RULE-SET,claude,🧠 Claude1
+  - RULE-SET,gemini,🔮 Gemini
+  - RULE-SET,cn_sites,🏠 国内流量
+  - DOMAIN-SUFFIX,lan,DIRECT
+  - DOMAIN-SUFFIX,local,DIRECT
+  - IP-CIDR,10.0.0.0/8,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT
+  - IP-CIDR,172.16.0.0/12,DIRECT
+  - IP-CIDR,192.168.0.0/16,DIRECT
+  - IP-CIDR,100.64.0.0/10,DIRECT
+  - IP-CIDR,198.18.0.0/16,DIRECT
+  - IP-CIDR6,fc00::/7,DIRECT
+  - IP-CIDR6,fe80::/10,DIRECT
+  - GEOIP,CN,🏠 国内流量
+  - MATCH,🚀 节点选择
