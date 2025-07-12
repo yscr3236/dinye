@@ -27,7 +27,7 @@ proxy-providers:
   hxyun:
     type: http
     path: /etc/openclash/proxy_providers/hxyun.yaml
-    url: 机场订阅
+    url: 订阅节点
     interval: 86400
     health-check:
       enable: true
