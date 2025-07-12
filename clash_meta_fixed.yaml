@@ -1,83 +1,83 @@
+# ==== 基础设置 ====
 mixed-port: 7890
+socks-port: 7891
 allow-lan: true
-bind-address: '*'
+bind-address: "*"
 mode: rule
 log-level: info
 ipv6: true
-unified-delay: true
-tcp-concurrent: true
-
 external-controller: 0.0.0.0:9090
-external-ui: "/etc/openclash/ui"
-
-experimental:
-  sniff-tls-sni: true
-
-sniffer:
-  enable: true
-  sniffing: 
-    - tls
-    - http
-  skip-domain:
-    - Mijia Cloud
-    - dlg.io.mi.com
-    - connected.miliao.com
-  force-domain:
-    - +.v2ex.com
+secret: ""
+unified-delay: true
+global-client-fingerprint: chrome
 
 profile:
   store-selected: true
   store-fake-ip: true
 
+# ==== DNS 配置优化 ====
 dns:
   enable: true
-  listen: 0.0.0.0:53
+  listen: 0.0.0.0:7874
   ipv6: true
   enhanced-mode: fake-ip
-  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    - "+.lan"
+    - "+.local"
+    - "+.internal"
+    - "+.arpa"
+    - "+.localdomain"
+    - "+.example"
+    - "time.*.com"
+    - "ntp.*.com"
+    - "pool.ntp.org"
+    - "gemini.circumlunar.space"
+    - "connect.rom.miui.com"
+    - "localhost.ptlogin2.qq.com"
+    - "resolver.*"
+    - "stun.*.*"
+    - "xbox.*.*"
   nameserver:
-    - 127.0.0.1:5335
+    - tls://dns.alidns.com
+    - tls://dot.pub
+    - https://dns.alidns.com/dns-query
   fallback:
+    - https://1.1.1.1/dns-query
     - https://dns.google/dns-query
-    - https://cloudflare-dns.com/dns-query
+    - tls://1.1.1.1
+    - tls://8.8.8.8
   fallback-filter:
     geoip: true
     geoip-code: CN
-    ipcidr:
-      - 240.0.0.0/4
-  disable-cache: true
-  dns-inbound-intercept: true
 
-tun:
-  enable: true
-  stack: mixed
-  auto-route: true
-  auto-detect-interface: true
-
+# ==== 节点订阅 ====
 proxy-providers:
   hxyun:
     type: http
-    path: /etc/openclash/providers/proxies/hxyun.yaml
-    url: "机场订阅"
-    interval: 86400
+    url: "订阅节点"
+    interval: 3600
+    path: ./proxy_providers/hxyun.yaml
     health-check:
       enable: true
-      lazy: true
-      url: http://cp.cloudflare.com/generate_204
       interval: 300
+      url: http://cp.cloudflare.com/generate_204
 
+# ==== 策略组 ====
 proxy-groups:
-  - name: "🚀 节点选择"
+  - name: 🚀 节点选择
     type: select
     proxies:
       - ♻️ 自动选择
-      - 🇭🇰 香港
-      - 🇸🇬 新加坡
-      - 🇯🇵 日本
-      - 🇺🇸 美国
-      - 🇹🇼 台湾
       - DIRECT
-      - REJECT
+      - 🛑 拦截广告
+      - 🌍 国外网站
+      - 🇭🇰 香港节点
+      - 🇯🇵 日本节点
+      - 🇸🇬 新加坡节点
+      - 🇺🇸 美国节点
+      - 🇹🇼 台湾节点
+    use:
+      - hxyun
 
   - name: ♻️ 自动选择
     type: url-test
@@ -99,102 +99,194 @@ proxy-groups:
     url: http://cp.cloudflare.com/generate_204
     interval: 300
 
-  - name: 🇭🇰 香港
+  - name: 🇭🇰 香港节点
+    type: url-test
+    use:
+      - hxyun
+    filter: "🇭🇰|HK|Hongkong"
+    url: http://cp.cloudflare.com/generate_204
+    interval: 300
+
+  - name: 🇸🇬 新加坡节点
+    type: url-test
+    use:
+      - hxyun
+    filter: "🇸🇬|SG|Singapore"
+    url: http://cp.cloudflare.com/generate_204
+    interval: 300
+
+  - name: 🇹🇼 台湾节点
+    type: url-test
+    use:
+      - hxyun
+    filter: "🇹🇼|TW|Taiwan"
+    url: http://cp.cloudflare.com/generate_204
+    interval: 300
+
+  - name: 🇯🇵 日本节点
+    type: url-test
+    use:
+      - hxyun
+    filter: "🇯🇵|JP|Japan"
+    url: http://cp.cloudflare.com/generate_204
+    interval: 300
+
+  - name: 🇺🇸 美国节点
+    type: url-test
+    use:
+      - hxyun
+    filter: "🇺🇸|US|United States"
+    url: http://cp.cloudflare.com/generate_204
+    interval: 300
+
+  - name: 📹 YouTube-优选
+    type: url-test
+    use:
+      - hxyun
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    filter: "(?i)(YouTube|YT)|🇭🇰|🇯🇵|🇸🇬|HK|JP|SG"
+
+  - name: 🌍 Google-优选
+    type: fallback
+    use:
+      - hxyun
+    url: http://cp.cloudflare.com/generate_204
+    filter: "(?i)🇺🇸|US|Google|OpenAI|Gemini"
+
+  - name: 🧠 ChatGPT-优选
+    type: fallback
+    use:
+      - hxyun
+    url: http://cp.cloudflare.com/generate_204
+    filter: "(?i)🇺🇸|🇯🇵|🇸🇬|ChatGPT|OpenAI"
+
+  - name: 📦 Telegram-优选
+    type: fallback
+    use:
+      - hxyun
+    url: http://cp.cloudflare.com/generate_204
+    filter: "(?i)🇺🇸|🇯🇵|🇸🇬|Telegram"
+
+  - name: 📱 TikTok-优选
+    type: fallback
+    use:
+      - hxyun
+    url: http://cp.cloudflare.com/generate_204
+    filter: "(?i)🇯🇵|🇺🇸|🇸🇬|TikTok"
+
+  - name: 🎬 Netflix-优选
+    type: fallback
+    use:
+      - hxyun
+    url: http://cp.cloudflare.com/generate_204
+    filter: "(?i)Netflix|🇺🇸|🇯🇵|🇸🇬"
+
+  - name: 🍎 Apple-优选
+    type: fallback
+    use:
+      - hxyun
+    url: http://cp.cloudflare.com/generate_204
+    filter: "(?i)Apple|iTunes|macOS|iCloud|🇸🇬|🇭🇰|🇯🇵"
+
+  - name: 🤖 Gemini-优选
+    type: fallback
+    use:
+      - hxyun
+    url: http://cp.cloudflare.com/generate_204
+    filter: "(?i)🇺🇸|US|Gemini|OpenAI|Google"
+
+  - name: 🛑 拦截广告
     type: select
-    use: [hxyun]
-    filter: "(?i)🇭🇰|HK|Hong"
+    proxies:
+      - REJECT
+      - DIRECT
 
-  - name: 🇸🇬 新加坡
+  - name: 🌍 国外网站
     type: select
-    use: [hxyun]
-    filter: "(?i)🇸🇬|SG|Singapore"
+    proxies:
+      - ♻️ 自动选择
+    use:
+      - hxyun
 
-  - name: 🇯🇵 日本
-    type: select
-    use: [hxyun]
-    filter: "(?i)🇯🇵|JP|Japan"
-
-  - name: 🇺🇸 美国
-    type: select
-    use: [hxyun]
-    filter: "(?i)🇺🇸|US|United States"
-
-  - name: 🇹🇼 台湾
-    type: select
-    use: [hxyun]
-    filter: "(?i)🇹🇼|TW|Taiwan"
-
-  - {name: 📹 YouTube, type: select, proxies: [🚀 节点选择, ♻️ 自动选择, 🇭🇰 香港, 🇯🇵 日本, 🇺🇸 美国, 🇹🇼 台湾, DIRECT]}
-  - {name: 🌍 Google, type: select, proxies: [🚀 节点选择, ♻️ 自动选择, 🇭🇰 香港, 🇯🇵 日本, 🇺🇸 美国, 🇹🇼 台湾, DIRECT]}
-  - {name: 🧠 ChatGPT, type: select, proxies: [🚀 节点选择, ♻️ 自动选择, 🇺🇸 美国, 🇯🇵 日本, 🇸🇬 新加坡]}
-  - {name: 🤖 Claude1, type: select, proxies: [🚀 节点选择, 🇺🇸 美国]}
-  - {name: 🐙 GitHub, type: select, proxies: [🚀 节点选择, ♻️ 自动选择, 🇯🇵 日本, DIRECT]}
-  - {name: 📦 Telegram, type: select, proxies: [🚀 节点选择, ♻️ 自动选择, 🇭🇰 香港, 🇸🇬 新加坡, 🇹🇼 台湾, DIRECT]}
-  - {name: 📱 TikTok, type: select, proxies: [🚀 节点选择, 🇯🇵 日本, 🇺🇸 美国, 🇹🇼 台湾]}
-  - {name: 🎬 Netflix, type: select, proxies: [🚀 节点选择, 🇭🇰 香港, 🇯🇵 日本, 🇺🇸 美国, 🇹🇼 台湾]}
-  - {name: 🍎 Apple, type: select, proxies: [🚀 节点选择, DIRECT]}
-  - {name: 🌐 国外网站, type: select, proxies: [🚀 节点选择, ♻️ 自动选择, 🇹🇼 台湾, DIRECT]}
-  - {name: 🇨🇳 国内网站, type: select, proxies: [DIRECT, 🚀 节点选择]}
-  - {name: 🛑 广告拦截, type: select, proxies: [REJECT, DIRECT]}
-  - {name: 🐟 漏网之鱼, type: select, proxies: [🚀 节点选择, DIRECT]}
-
+# ==== 规则集 ====
 rule-providers:
   reject:
     type: http
     behavior: domain
-    url: https://rule-provider.aoe.top/reject.yaml
-    path: /etc/openclash/rules/reject.yaml
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/reject.txt
+    path: ./ruleset/reject.yaml
     interval: 86400
 
-  china:
+  YouTube:
     type: http
     behavior: domain
-    url: https://rule-provider.aoe.top/china.yaml
-    path: /etc/openclash/rules/china.yaml
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/YouTube.txt
+    path: ./ruleset/YouTube.yaml
     interval: 86400
 
   google:
     type: http
     behavior: domain
-    url: https://rule-provider.aoe.top/google.yaml
-    path: /etc/openclash/rules/google.yaml
-    interval: 86400
-
-  youtube:
-    type: http
-    behavior: domain
-    url: https://rule-provider.aoe.top/youtube.yaml
-    path: /etc/openclash/rules/youtube.yaml
-    interval: 86400
-
-  telegram:
-    type: http
-    behavior: domain
-    url: https://rule-provider.aoe.top/telegram.yaml
-    path: /etc/openclash/rules/telegram.yaml
-    interval: 86400
-
-  netflix:
-    type: http
-    behavior: domain
-    url: https://rule-provider.aoe.top/netflix.yaml
-    path: /etc/openclash/rules/netflix.yaml
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/google.txt
+    path: ./ruleset/google.yaml
     interval: 86400
 
   openai:
     type: http
     behavior: domain
-    url: https://rule-provider.aoe.top/openai.yaml
-    path: /etc/openclash/rules/openai.yaml
+    url: https://cdn.jsdelivr.net/gh/DivineEngine/Profiles@master/Clash/RuleSet/Extra/OpenAI.yaml
+    path: ./ruleset/openai.yaml
     interval: 86400
 
+  telegram:
+    type: http
+    behavior: domain
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/telegramcidr.txt
+    path: ./ruleset/telegram.yaml
+    interval: 86400
+
+  tiktok:
+    type: http
+    behavior: domain
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/tiktok.txt
+    path: ./ruleset/tiktok.yaml
+    interval: 86400
+
+  netflix:
+    type: http
+    behavior: domain
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/netflix.txt
+    path: ./ruleset/netflix.yaml
+    interval: 86400
+
+  apple:
+    type: http
+    behavior: domain
+    url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/apple.txt
+    path: ./ruleset/apple.yaml
+    interval: 86400
+
+# ==== 规则 ====
 rules:
-  - RULE-SET,youtube,📹 YouTube
-  - RULE-SET,google,🌍 Google
-  - RULE-SET,openai,🧠 ChatGPT
-  - RULE-SET,telegram,📦 Telegram
-  - RULE-SET,netflix,🎬 Netflix
-  - RULE-SET,china,🇨🇳 国内网站
-  - RULE-SET,reject,🛑 广告拦截
+  - RULE-SET,YouTube,📹 YouTube-优选
+  - DOMAIN-SUFFIX,youtube.com,📹 YouTube-优选
+  - DOMAIN-SUFFIX,ytimg.com,📹 YouTube-优选
+  - DOMAIN-KEYWORD,youtube,📹 YouTube-优选
+  - DOMAIN-KEYWORD,ytimg,📹 YouTube-优选
+  - RULE-SET,google,🌍 Google-优选
+  - DOMAIN-SUFFIX,google.com,🌍 Google-优选
+  - DOMAIN-KEYWORD,google,🌍 Google-优选
+  - RULE-SET,openai,🧠 ChatGPT-优选
+  - DOMAIN-SUFFIX,gemini.google.com,🤖 Gemini-优选
+  - DOMAIN-SUFFIX,generativeai.google,🤖 Gemini-优选
+  - DOMAIN-KEYWORD,gemini,🤖 Gemini-优选
+  - DOMAIN-SUFFIX,circumlunar.space,🚀 节点选择
+  - DOMAIN,gemini.circumlunar.space,🚀 节点选择
+  - RULE-SET,telegram,📦 Telegram-优选
+  - RULE-SET,tiktok,📱 TikTok-优选
+  - RULE-SET,netflix,🎬 Netflix-优选
+  - RULE-SET,apple,🍎 Apple-优选
+  - RULE-SET,reject,🛑 拦截广告
   - GEOIP,CN,DIRECT
-  - MATCH,🐟 漏网之鱼
+  - MATCH,🚀 节点选择
