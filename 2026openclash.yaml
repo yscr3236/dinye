@@ -1,0 +1,388 @@
+#====核心配置 =======
+mixed-port: 7890
+redir-port: 7892
+tproxy-port: 7893
+allow-lan: true
+bind-address: "*"
+mode: rule
+log-level: info
+ipv6: true
+external-controller: 0.0.0.0:9090
+
+profile:
+  store-selected: true
+  store-fake-ip: true
+
+#====DNS防泄漏====
+dns:
+  enable: true
+  listen: 0.0.0.0:7874
+  ipv6: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    - "*.lan"
+    - "*.local"
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://dns.tencent.com/dns-query
+    - https://1.1.1.1/dns-query
+    - https://8.8.8.8/dns-query
+  fallback:
+    - https://1.1.1.1/dns-query
+    - https://8.8.8.8/dns-query
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4
+
+#====TUN推荐====
+tun:
+  enable: true
+  stack: mixed
+  auto-route: true
+  auto-detect-interface: true
+  dns-hijack:
+    - any:53
+
+#====机场订阅========
+proxy-providers:
+  airport:
+    type: http
+    url: "你的订阅地址"
+    interval: 3600
+    path: ./proxy_provider/airport.yaml
+    health-check:
+      enable: true
+      url: http://www.gstatic.com/generate_204
+      interval: 300
+
+#====节点地区分组====
+proxy-groups:
+  - name: 🇭🇰 香港节点
+    type: select
+    use:
+      - airport
+    filter: "(?i)hk|hongkong|香港"
+
+  - name: 🇸🇬 新加坡节点
+    type: select
+    use:
+      - airport
+    filter: "(?i)sg|singapore|新加坡"
+
+  - name: 🇯🇵 日本节点
+    type: select
+    use:
+      - airport
+    filter: "(?i)jp|japan|日本"
+
+  - name: 🇺🇸 美国节点
+    type: select
+    use:
+      - airport
+    filter: "(?i)us|america|美国"
+
+  #====自动测速节点====
+  - name: 🚀 节点选择
+    type: select
+    proxies:
+      - ♻️ 自动选择
+      - 🇭🇰 香港节点
+      - 🇯🇵 日本节点
+      - 🇸🇬 新加坡节点
+      - 🇺🇸 美国节点
+      - DIRECT
+
+  - name: ♻️ 自动选择
+    type: url-test
+    use:
+      - airport
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  #====AI优选节点====
+  - name: 🤖 AI优选
+    type: url-test
+    use:
+      - airport
+    filter: "(?i)us|sg"
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  #====AI服务策略====
+  - name: 🧠 ChatGPT
+    type: select
+    proxies:
+      - 🤖 AI优选
+      - 🇺🇸 美国节点
+      - 🇸🇬 新加坡节点
+
+  - name: ✨ Gemini
+    type: select
+    proxies:
+      - 🤖 AI优选
+      - 🇯🇵 日本节点
+
+  - name: 🧩 Claude
+    type: select
+    proxies:
+      - 🤖 AI优选
+
+  - name: 🚀 Grok
+    type: select
+    proxies:
+      - 🤖 AI优选
+
+  - name: 🤖 Copilot
+    type: select
+    proxies:
+      - 🤖 AI优选
+
+  #====X(Twitter)====
+  - name: 🐦 X自动
+    type: url-test
+    use:
+      - airport
+    filter: "(?i)us|jp|sg"
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: 🐦 X(Twitter)
+    type: select
+    proxies:
+      - 🐦 X自动
+      - 🇺🇸 美国节点
+      - 🇯🇵 日本节点
+      - 🇸🇬 新加坡节点
+
+  #====流媒体====
+  - name: 📹 YouTube
+    type: select
+    proxies:
+      - 🇭🇰 香港节点
+      - 🇯🇵 日本节点
+      - 🇸🇬 新加坡节点
+      - ♻️ 自动选择
+
+  - name: 🎬 Netflix
+    type: select
+    proxies:
+      - 🇸🇬 新加坡节点
+      - 🇺🇸 美国节点
+
+  - name: 📺 Disney+
+    type: select
+    proxies:
+      - 🇸🇬 新加坡节点
+
+  - name: 🎞 PrimeVideo
+    type: select
+    proxies:
+      - 🇺🇸 美国节点
+
+  - name: 📱 TikTok
+    type: select
+    proxies:
+      - 🇸🇬 新加坡节点
+      - 🇯🇵 日本节点
+
+  #====基础服务====
+  - name: 🌍 Google
+    type: select
+    proxies:
+      - 🇯🇵 日本节点
+      - 🇺🇸 美国节点
+
+  - name: 📦 Telegram
+    type: select
+    proxies:
+      - 🇺🇸 美国节点
+
+  - name: 🍎 Apple
+    type: select
+    proxies:
+      - DIRECT
+
+  - name: 💻 GitHub
+    type: select
+    proxies:
+      - ♻️ 自动选择
+      - 🇯🇵 日本节点
+      - 🚀 节点选择
+
+  #==== 游戏平台====
+  - name: 🎮 Steam
+    type: select
+    proxies:
+      - ♻️ 自动选择
+      - 🚀 节点选择
+
+  #====广告拦截====
+  - name: 🚫 广告拦截
+    type: select
+    proxies:
+      - REJECT
+
+  #====默认策略====
+  - name: 🇨🇳 国内网站
+    type: select
+    proxies:
+      - DIRECT
+
+  - name: 🌐 国外网站
+    type: select
+    proxies:
+      - ♻️ 自动选择
+
+#======规则模板======
+rule-providers:
+  OpenAI:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/OpenAI/OpenAI.yaml
+    path: ./ruleset/openai.yaml
+    interval: 86400
+
+  GeminiAI:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Gemini/Gemini.yaml
+    path: ./ruleset/gemini.yaml
+    interval: 86400
+
+  AI_All:
+    type: http
+    behavior: domain
+    url: https://ruleset.skk.moe/Clash/non_ip/ai.txt
+    path: ./ruleset/ai_all.yaml
+    interval: 86400
+
+  CopilotAI:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Copilot/Copilot.yaml
+    path: ./ruleset/copilot.yaml
+    interval: 86400
+
+  ClaudeAI:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Claude/Claude.yaml
+    path: ./ruleset/claude.yaml
+    interval: 86400
+
+  YouTube:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/YouTube/YouTube.yaml
+    path: ./ruleset/youtube.yaml
+    interval: 86400
+
+  Netflix:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Netflix/Netflix.yaml
+    path: ./ruleset/netflix.yaml
+    interval: 86400
+
+  TikTok:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/TikTok/TikTok.yaml
+    path: ./ruleset/tiktok.yaml
+    interval: 86400
+
+  Twitter:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Twitter/Twitter.yaml
+    path: ./ruleset/twitter.yaml
+    interval: 86400
+
+  Google:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Google/Google.yaml
+    path: ./ruleset/google.yaml
+    interval: 86400
+
+  Telegram:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Telegram/Telegram.yaml
+    path: ./ruleset/telegram.yaml
+    interval: 86400
+
+  Apple:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Apple/Apple.yaml
+    path: ./ruleset/apple.yaml
+    interval: 86400
+
+  Disney:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Disney/Disney.yaml
+    path: ./ruleset/disney.yaml
+    interval: 86400
+
+  PrimeVideo:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/PrimeVideo/PrimeVideo.yaml
+    path: ./ruleset/primevideo.yaml
+    interval: 86400
+
+  GitHub:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/GitHub/GitHub.yaml
+    path: ./ruleset/github.yaml
+    interval: 86400
+
+  Steam:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Steam/Steam.yaml
+    path: ./ruleset/steam.yaml
+    interval: 86400
+
+  Advertising:
+    type: http
+    behavior: domain
+    url: https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/reject.txt
+    path: ./ruleset/reject.yaml
+    interval: 86400
+
+#====规则====
+rules:
+  - RULE-SET,Advertising,🚫 广告拦截
+  - RULE-SET,OpenAI,🧠 ChatGPT
+  - RULE-SET,GeminiAI,✨ Gemini
+  - RULE-SET,ClaudeAI,🧩 Claude
+  - RULE-SET,AI_All,🚀 Grok
+  - DOMAIN-SUFFIX,grok.x.ai,🚀 Grok
+  - DOMAIN-SUFFIX,api.x.ai,🚀 Grok
+  # - DOMAIN-SUFFIX,grok.x.com,🚀 Grok
+  
+  - RULE-SET,CopilotAI,🤖 Copilot
+  - RULE-SET,YouTube,📹 YouTube
+  - RULE-SET,Netflix,🎬 Netflix
+  - RULE-SET,TikTok,📱 TikTok
+  - RULE-SET,Twitter,🐦 X(Twitter)
+  - RULE-SET,Google,🌍 Google
+  - RULE-SET,Telegram,📦 Telegram
+  - RULE-SET,Apple,🍎 Apple
+  - RULE-SET,Disney,📺 Disney+
+  - RULE-SET,PrimeVideo,🎞 PrimeVideo
+  - RULE-SET,Steam,🎮 Steam
+  - RULE-SET,GitHub,💻 GitHub
+
+  - GEOIP,CN,🇨🇳 国内网站
+  - MATCH,🌐 国外网站
